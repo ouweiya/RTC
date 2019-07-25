@@ -1,5 +1,4 @@
-简易的RTC 视频通话,
+预览: [rtcdsdsd](https://www.cxdd.com)
 
 ![rtc](./img/rtc.png)
 
-预览: [rtc](https://www.cxdd.com)
