@@ -1,161 +1,100 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-    <title>RTC</title>
-    <style>
-      video {
-        width: 50%;
-        border: 1px solid #ccc;
-      }
-      .mes {
-        display: inline-block;
-        vertical-align: top;
-      }
-    </style>
-  </head>
-  <body>
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+  <title>RTC</title>
+  <style>
+    video {
+      width: 50%;
+      border: 1px solid #ccc;
+    }
+
+    .mes {
+      display: inline-block;
+      vertical-align: top;
+    }
+  </style>
+</head>
+
+<body>
+  <div>
     <div>
-      <div>
-        <button id="start">Start</button> <button id="stop">Stop</button>
-        <a href="http://127.0.0.1:5500/index.html#other" target="_blank" id="a">其他用户页面</a>
-      </div>
-      <video autoplay></video>
-
-      <div class="mes">
-        <input type="text" id="txt" autofocus />
-        <button id="submit">Submit</button>
-        <ul></ul>
-      </div>
+      <button id="start">Start</button> <button id="stop">Stop</button>
+      <a href="http://127.0.0.1:8080/#other" target="_blank" id="a">其他用户页面</a>
     </div>
-    <!-- gh-pages -->
-    <script>
-      // const ws = new WebSocket('wss://localhost:8080');
-      const ws = new WebSocket('wss://66.42.68.93:8080');
-      ws.onerror = err => console.error(err);
+    <video autoplay></video>
 
-      let handleOffer = null;
-      let handleAnswer = null;
-      let handleCandidate = null;
-      let handleClose = null;
-      let main = null;
-      let other = null;
-      const ul = document.querySelector('ul');
-      const submit = document.querySelector('#submit');
-      const txt = document.querySelector('#txt');
+    <div class="mes">
+      <input type="text" id="txt" autofocus />
+      <button id="submit">Submit</button>
+      <ul></ul>
+    </div>
+  </div>
 
-      ws.onmessage = ({ data }) => {
-        const d = JSON.parse(data);
-        switch (d.type) {
-          case 'offer':
-            handleOffer(d);
-            break;
-          case 'answer':
-            handleAnswer(d);
-            break;
-          case 'candidate':
-            handleCandidate(d.candidate);
-            break;
-          case 'close':
-            handleClose();
-            break;
-          default:
-            break;
-        }
+
+  <script>
+    // const ws = new WebSocket('ws://localhost:7777');
+    // const ws = new WebSocket('wss://66.42.68.93:7777');
+    const ws = new WebSocket('wss://3576c5ae.ap.ngrok.io');
+    ws.onerror = err => console.error(err);
+
+    let handleOffer = null;
+    let handleAnswer = null;
+    let handleCandidate = null;
+    let handleClose = null;
+    let main = null;
+    let other = null;
+    const ul = document.querySelector('ul');
+    const submit = document.querySelector('#submit');
+    const txt = document.querySelector('#txt');
+
+    ws.onmessage = ({ data }) => {
+      const d = JSON.parse(data);
+      switch (d.type) {
+        case 'offer':
+          handleOffer(d);
+          break;
+        case 'answer':
+          handleAnswer(d);
+          break;
+        case 'candidate':
+          handleCandidate(d.candidate);
+          break;
+        case 'close':
+          handleClose();
+          break;
+        default:
+          break;
+      }
+    };
+    const configuration = { iceServers: [{ url: 'stun:stun2.1.google.com:19302' }] };
+
+    if (location.hash !== '#other') {
+      ws.onopen = () => {
+        console.log('连接到信令服务器');
+        ws.send(JSON.stringify({ type: 'login', user: 'main' }));
       };
-      const configuration = { iceServers: [{ url: 'stun:stun2.1.google.com:19302' }] };
-
-      if (location.hash !== '#other') {
-        ws.onopen = () => {
-          console.log('连接到信令服务器');
-          ws.send(JSON.stringify({ type: 'login', user: 'main' }));
-        };
-        const start = _ => {
-          let o = null;
-          let ice = null;
-          let stream = null;
-          const c = new RTCPeerConnection();
-          console.log(navigator.mediaDevices);
-          navigator.mediaDevices.getDisplayMedia().then(res => {
-            stream = res;
-            c.addStream(res);
-            document.querySelector('video').srcObject = res;
-            c.onicecandidate = e => {
-              if (e.candidate) {
-                ice = e.candidate;
-                console.log(e.candidate);
-                ws.send(JSON.stringify({ type: 'candidate', candidate: ice }));
-              }
-            };
-            main = c.createDataChannel('hello-1.html');
-            c.ondatachannel = e => {
-              const res = e.channel;
-              res.onmessage = e => {
-                const li = document.createElement('li');
-                const mes = JSON.parse(e.data);
-                li.textContent = `对方: ${mes}`;
-                ul.append(li);
-              };
-              res.onopen = e => console.log('通道打开了');
-            };
-            c.createOffer().then(offer => {
-              c.setLocalDescription(offer);
-              o = offer;
-              console.log(o);
-              ws.send(JSON.stringify(o));
-            });
-          });
-          handleAnswer = answer => {
-            c.setRemoteDescription(new RTCSessionDescription(answer));
-            console.log(answer);
-          };
-          document.querySelector('#stop').addEventListener('click', _ => {
-            c.close();
-            stream.getTracks().forEach(track => track.stop());
-            document.querySelector('video').srcObject = null;
-            ws.send(JSON.stringify({ type: 'close', user: 'other' }));
-          });
-          handleClose = _ => {
-            c.close();
-            stream.getTracks().forEach(track => track.stop());
-            document.querySelector('video').srcObject = null;
-          };
-        };
-        document.querySelector('#start').addEventListener('click', start);
-        submit.addEventListener('click', _ => {
-          main.send(JSON.stringify(txt.value));
-          const li = document.createElement('li');
-          li.textContent = `我: ${txt.value}`;
-          ul.append(li);
-          txt.value = '';
-        });
-      } else {
-        document.querySelector('#start').style.display = 'none';
-        document.querySelector('#a').style.display = 'none';
-        ws.onopen = () => {
-          console.log('连接到信令服务器');
-          ws.send(JSON.stringify({ type: 'login', user: 'other' }));
-        };
+      const start = _ => {
         let o = null;
         let ice = null;
-        let c = null;
-        handleOffer = offer => {
-          c = new RTCPeerConnection(configuration);
-          c.onaddstream = e => {
-            console.log('stream', e.stream);
-            document.querySelector('video').srcObject = e.stream;
-            console.dir(document.querySelector('video'));
+        let stream = null;
+        const c = new RTCPeerConnection();
+        console.log(navigator.mediaDevices);
+        navigator.mediaDevices.getDisplayMedia().then(res => {
+          stream = res;
+          c.addStream(res);
+          document.querySelector('video').srcObject = res;
+          c.onicecandidate = e => {
+            if (e.candidate) {
+              ice = e.candidate;
+              console.log(e.candidate);
+              ws.send(JSON.stringify({ type: 'candidate', candidate: ice }));
+            }
           };
-
-          c.setRemoteDescription(new RTCSessionDescription(offer));
-          c.createAnswer().then(answer => {
-            o = answer;
-            ws.send(JSON.stringify(o));
-            c.setLocalDescription(answer);
-          });
-          other = c.createDataChannel('Hello-2.html');
+          main = c.createDataChannel('hello-1.html');
           c.ondatachannel = e => {
             const res = e.channel;
             res.onmessage = e => {
@@ -166,30 +105,97 @@
             };
             res.onopen = e => console.log('通道打开了');
           };
-        };
-        handleCandidate = candidate => {
-          c.addIceCandidate(new RTCIceCandidate(candidate));
-          console.log('candidate', candidate);
+          c.createOffer().then(offer => {
+            c.setLocalDescription(offer);
+            o = offer;
+            console.log(o);
+            ws.send(JSON.stringify(o));
+          });
+        });
+        handleAnswer = answer => {
+          c.setRemoteDescription(new RTCSessionDescription(answer));
+          console.log(answer);
         };
         document.querySelector('#stop').addEventListener('click', _ => {
-          c && c.close();
-          ws.send(JSON.stringify({ type: 'close', user: 'main' }));
+          c.close();
+          stream.getTracks().forEach(track => track.stop());
+          document.querySelector('video').srcObject = null;
+          ws.send(JSON.stringify({ type: 'close', user: 'other' }));
         });
         handleClose = _ => {
           c.close();
+          stream.getTracks().forEach(track => track.stop());
           document.querySelector('video').srcObject = null;
-          o = null;
-          ice = null;
-          // c = null;
         };
-        submit.addEventListener('click', _ => {
-          other.send(JSON.stringify(txt.value));
-          const li = document.createElement('li');
-          li.textContent = `我: ${txt.value}`;
-          ul.append(li);
-          txt.value = '';
+      };
+      document.querySelector('#start').addEventListener('click', start);
+      submit.addEventListener('click', _ => {
+        main.send(JSON.stringify(txt.value));
+        const li = document.createElement('li');
+        li.textContent = `我: ${txt.value}`;
+        ul.append(li);
+        txt.value = '';
+      });
+    } else {
+      document.querySelector('#start').style.display = 'none';
+      document.querySelector('#a').style.display = 'none';
+      ws.onopen = () => {
+        console.log('连接到信令服务器');
+        ws.send(JSON.stringify({ type: 'login', user: 'other' }));
+      };
+      let o = null;
+      let ice = null;
+      let c = null;
+      handleOffer = offer => {
+        c = new RTCPeerConnection(configuration);
+        c.onaddstream = e => {
+          console.log('stream', e.stream);
+          document.querySelector('video').srcObject = e.stream;
+          console.dir(document.querySelector('video'));
+        };
+
+        c.setRemoteDescription(new RTCSessionDescription(offer));
+        c.createAnswer().then(answer => {
+          o = answer;
+          ws.send(JSON.stringify(o));
+          c.setLocalDescription(answer);
         });
-      }
-    </script>
-  </body>
+        other = c.createDataChannel('Hello-2.html');
+        c.ondatachannel = e => {
+          const res = e.channel;
+          res.onmessage = e => {
+            const li = document.createElement('li');
+            const mes = JSON.parse(e.data);
+            li.textContent = `对方: ${mes}`;
+            ul.append(li);
+          };
+          res.onopen = e => console.log('通道打开了');
+        };
+      };
+      handleCandidate = candidate => {
+        c.addIceCandidate(new RTCIceCandidate(candidate));
+        console.log('candidate', candidate);
+      };
+      document.querySelector('#stop').addEventListener('click', _ => {
+        c && c.close();
+        ws.send(JSON.stringify({ type: 'close', user: 'main' }));
+      });
+      handleClose = _ => {
+        c.close();
+        document.querySelector('video').srcObject = null;
+        o = null;
+        ice = null;
+        // c = null;
+      };
+      submit.addEventListener('click', _ => {
+        other.send(JSON.stringify(txt.value));
+        const li = document.createElement('li');
+        li.textContent = `我: ${txt.value}`;
+        ul.append(li);
+        txt.value = '';
+      });
+    }
+  </script>
+</body>
+
 </html>

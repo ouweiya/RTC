@@ -1,18 +1,10 @@
-const fs = require('fs');
-const https = require('https');
 const WebSocket = require('ws');
-
-const server = https.createServer({
-  cert: fs.readFileSync('./https/cert.pem'),
-  key: fs.readFileSync('./https/key.pem')
-});
-
-const wss = new WebSocket.Server({ server });
+const wss = new WebSocket.Server({ port: 7777 });
 
 let users = {};
 
 wss.on('connection', ws => {
-  console.log('有人连接')
+  console.log('有人连接');
   ws.on('message', mes => {
     const d = JSON.parse(mes);
     switch (d.type) {
@@ -38,8 +30,15 @@ wss.on('connection', ws => {
   });
 });
 
-server.listen(8080);
+// server.listen(8080);
 
+// const fs = require('fs');
+// const https = require('https');
 // const WebSocket = require('ws');
-// const wss = new WebSocket.Server({ port: 8080 });
-// global.users = users;
+
+// const server = https.createServer({
+//   cert: fs.readFileSync('./https/cert.pem'),
+//   key: fs.readFileSync('./https/key.pem')
+// });
+
+// const wss = new WebSocket.Server({ server });
