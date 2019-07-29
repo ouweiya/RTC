@@ -33,7 +33,8 @@
     </div>
 
     <script>
-      const ws = new WebSocket('wss://3576c5ae.ap.ngrok.io');
+      const url = 'wss://3576c5ae.ap.ngrok.io';
+      const ws = new WebSocket(url);
       ws.onerror = err => console.error(err);
 
       let handleOffer = null;
