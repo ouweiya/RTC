@@ -32,8 +32,8 @@
     </div>
     <!-- gh-pages -->
     <script>
-      // const ws = new WebSocket('ws://localhost:8080');
-      const ws = new WebSocket('ws://66.42.68.93:8080');
+      // const ws = new WebSocket('wss://localhost:8080');
+      const ws = new WebSocket('wss://66.42.68.93:8080');
       ws.onerror = err => console.error(err);
 
       let handleOffer = null;
