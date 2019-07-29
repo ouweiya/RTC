@@ -76,7 +76,7 @@
           let o = null;
           let ice = null;
           let stream = null;
-          const c = new RTCPeerConnection();
+          const c = new RTCPeerConnection(configuration);
           console.log(navigator.mediaDevices);
           navigator.mediaDevices.getDisplayMedia().then(res => {
             stream = res;
