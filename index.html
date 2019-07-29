@@ -20,7 +20,7 @@
     <div>
       <div>
         <button id="start">Start</button> <button id="stop">Stop</button>
-        <a href="http://127.0.0.1:5500/c.html#other" target="_blank" id="a">其他用户页面</a>
+        <a href="http://127.0.0.1:5500/index.html#other" target="_blank" id="a">其他用户页面</a>
       </div>
       <video autoplay></video>
 
@@ -32,7 +32,8 @@
     </div>
 
     <script>
-      const ws = new WebSocket('ws://localhost:8080');
+      // const ws = new WebSocket('ws://localhost:8080');
+      const ws = new WebSocket('ws://66.42.68.93:8080');
       ws.onerror = err => console.error(err);
 
       let handleOffer = null;
@@ -75,7 +76,7 @@
           let o = null;
           let ice = null;
           let stream = null;
-          const c = new RTCPeerConnection(configuration);
+          const c = new RTCPeerConnection();
           console.log(navigator.mediaDevices);
           navigator.mediaDevices.getDisplayMedia().then(res => {
             stream = res;

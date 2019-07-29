@@ -1,7 +1,7 @@
 const WebSocket = require('ws');
 const wss = new WebSocket.Server({ port: 8080 });
 let users = {};
-global.users = users;
+// global.users = users;
 
 wss.on('connection', ws => {
   ws.on('message', mes => {
