@@ -1,7 +1,3 @@
-预览: [rtcdsdsd](https://www.cxdd.com)
+预览: [RTC](https://ouweiya.github.io/RTC)
 
 ![rtc](./img/rtc.png)
-
-gh-pages
-git branch gh-pages
-git checkout gh-pages
